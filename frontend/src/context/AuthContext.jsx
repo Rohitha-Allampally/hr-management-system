@@ -5,38 +5,85 @@ export const AuthContext = createContext();
 
 export const AuthProvider = ({ children }) => {
   const [user, setUser] = useState(null);
+  const [isLoading, setIsLoading] = useState(true);
 
+  // Initialize user from localStorage on mount
   useEffect(() => {
-    const storedUser = localStorage.getItem("user");
-    if (storedUser) {
-      // eslint-disable-next-line react-hooks/set-state-in-effect
-      setUser(JSON.parse(storedUser));
-    }
+    const initializeAuth = () => {
+      try {
+        const storedUser = localStorage.getItem("user");
+        const storedTimestamp = localStorage.getItem("authTimestamp");
+        
+        if (storedUser && storedTimestamp) {
+          const user = JSON.parse(storedUser);
+          // Session valid for 24 hours
+          const authTime = parseInt(storedTimestamp);
+          const now = Date.now();
+          const sessionValidTime = 24 * 60 * 60 * 1000; // 24 hours in ms
+          
+          if (now - authTime < sessionValidTime) {
+            setUser(user);
+          } else {
+            // Session expired, clear storage
+            localStorage.removeItem("user");
+            localStorage.removeItem("authTimestamp");
+          }
+        }
+      } catch (error) {
+        console.error("Error reading from localStorage:", error);
+        localStorage.removeItem("user");
+        localStorage.removeItem("authTimestamp");
+      } finally {
+        setIsLoading(false);
+      }
+    };
+
+    initializeAuth();
   }, []);
 
   const login = async (email, password) => {
-    // Verify against registered users in localStorage
-    const users = JSON.parse(localStorage.getItem("users") || "[]");
-    const registeredUser = users.find(u => u.email === email && u.password === password);
-    
-    if (registeredUser) {
-      const loggedInUser = { id: registeredUser.id, name: registeredUser.name, email: registeredUser.email };
-      localStorage.setItem("user", JSON.stringify(loggedInUser));
-      setUser(loggedInUser);
-      return true;
+    try {
+      // Verify against registered users in localStorage
+      const users = JSON.parse(localStorage.getItem("users") || "[]");
+      const registeredUser = users.find(u => u.email === email && u.password === password);
+      
+      if (registeredUser) {
+        const loggedInUser = { 
+          id: registeredUser.id, 
+          name: registeredUser.name, 
+          email: registeredUser.email 
+        };
+        
+        // Store both user data and timestamp
+        localStorage.setItem("user", JSON.stringify(loggedInUser));
+        localStorage.setItem("authTimestamp", Date.now().toString());
+        localStorage.setItem("authToken", `token_${registeredUser.id}_${Date.now()}`);
+        
+        setUser(loggedInUser);
+        return true;
+      }
+      
+      return false;
+    } catch (error) {
+      console.error("Login error:", error);
+      return false;
     }
-    
-    return false;
   };
 
   const logout = () => {
-    localStorage.removeItem("token");
-    localStorage.removeItem("user");
-    setUser(null);
+    try {
+      localStorage.removeItem("token");
+      localStorage.removeItem("user");
+      localStorage.removeItem("authTimestamp");
+      localStorage.removeItem("authToken");
+      setUser(null);
+    } catch (error) {
+      console.error("Logout error:", error);
+    }
   };
 
   return (
-    <AuthContext.Provider value={{ user, login, logout }}>
+    <AuthContext.Provider value={{ user, login, logout, isLoading }}>
       {children}
     </AuthContext.Provider>
   );
