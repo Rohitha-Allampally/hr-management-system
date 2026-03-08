@@ -18,6 +18,11 @@ const Login = () => {
     }
   };
 
+  const handleDemoLogin = (demoEmail, demoPassword) => {
+    setEmail(demoEmail);
+    setPassword(demoPassword);
+  };
+
   return (
     <div style={{
       minHeight: "100vh",
@@ -83,6 +88,55 @@ const Login = () => {
             Login
           </button>
         </form>
+
+        {/* Demo Credentials Section */}
+        <div style={{
+          marginTop: "25px",
+          padding: "15px",
+          backgroundColor: "#f0f7ff",
+          borderRadius: "4px",
+          borderLeft: "4px solid #0066cc"
+        }}>
+          <p style={{ margin: "0 0 10px 0", fontWeight: "600", color: "#333" }}>Demo Credentials:</p>
+          <div style={{ marginBottom: "10px" }}>
+            <button
+              type="button"
+              onClick={() => handleDemoLogin("admin@hrms.com", "admin123")}
+              style={{
+                width: "100%",
+                padding: "8px",
+                backgroundColor: "#e3f2fd",
+                border: "1px solid #90caf9",
+                borderRadius: "4px",
+                fontSize: "13px",
+                color: "#0066cc",
+                cursor: "pointer",
+                marginBottom: "5px"
+              }}
+            >
+              Admin: admin@hrms.com / admin123
+            </button>
+          </div>
+          <div>
+            <button
+              type="button"
+              onClick={() => handleDemoLogin("test@hrms.com", "test123")}
+              style={{
+                width: "100%",
+                padding: "8px",
+                backgroundColor: "#e3f2fd",
+                border: "1px solid #90caf9",
+                borderRadius: "4px",
+                fontSize: "13px",
+                color: "#0066cc",
+                cursor: "pointer"
+              }}
+            >
+              Test: test@hrms.com / test123
+            </button>
+          </div>
+        </div>
+
         <div style={{ textAlign: "center", marginTop: "20px" }}>
           <p style={{ color: "#666", marginBottom: "10px" }}>
             <Link to="/forgot-password" style={{ color: "#0066cc", textDecoration: "none", fontWeight: "600" }}>
