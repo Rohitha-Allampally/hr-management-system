@@ -1,23 +1,8 @@
 import { createContext, useState, useEffect } from "react";
+import API from "../services/api";
 
 // eslint-disable-next-line react-refresh/only-export-components
 export const AuthContext = createContext();
-
-// Default demo user for testing across different ports
-const DEFAULT_USERS = [
-  {
-    id: 1,
-    name: "Admin User",
-    email: "admin@hrms.com",
-    password: "admin123"
-  },
-  {
-    id: 2,
-    name: "Test User",
-    email: "test@hrms.com",
-    password: "test123"
-  }
-];
 
 export const AuthProvider = ({ children }) => {
   const [user, setUser] = useState(null);
@@ -43,20 +28,14 @@ export const AuthProvider = ({ children }) => {
             // Session expired, clear storage
             localStorage.removeItem("user");
             localStorage.removeItem("authTimestamp");
+            localStorage.removeItem("authToken");
           }
-        }
-
-        // Initialize default users if not present
-        const users = JSON.parse(localStorage.getItem("users") || "[]");
-        if (users.length === 0) {
-          localStorage.setItem("users", JSON.stringify(DEFAULT_USERS));
         }
       } catch (error) {
         console.error("Error reading from localStorage:", error);
         localStorage.removeItem("user");
         localStorage.removeItem("authTimestamp");
-        // Ensure default users are set
-        localStorage.setItem("users", JSON.stringify(DEFAULT_USERS));
+        localStorage.removeItem("authToken");
       } finally {
         setIsLoading(false);
       }
@@ -65,33 +44,42 @@ export const AuthProvider = ({ children }) => {
     initializeAuth();
   }, []);
 
+  const register = async (name, email, password) => {
+    try {
+      const response = await API.post("/auth/register", {
+        name,
+        email,
+        password
+      });
+      return { success: true, user: response.data };
+    } catch (error) {
+      console.error("Registration error:", error);
+      return { success: false, error: error.response?.data?.message || "Registration failed" };
+    }
+  };
+
   const login = async (email, password) => {
     try {
-      // Get users from localStorage, fallback to default users
-      let users = JSON.parse(localStorage.getItem("users") || "[]");
-      if (users.length === 0) {
-        users = DEFAULT_USERS;
-        localStorage.setItem("users", JSON.stringify(DEFAULT_USERS));
-      }
+      const response = await API.post("/auth/login", {
+        email,
+        password
+      });
 
-      const registeredUser = users.find(u => u.email === email && u.password === password);
-      
-      if (registeredUser) {
-        const loggedInUser = { 
-          id: registeredUser.id, 
-          name: registeredUser.name, 
-          email: registeredUser.email 
+      if (response.status === 200) {
+        const loggedInUser = {
+          id: response.data.id,
+          name: response.data.name,
+          email: response.data.email
         };
-        
-        // Store both user data and timestamp
+
+        // Store user data and timestamp
         localStorage.setItem("user", JSON.stringify(loggedInUser));
         localStorage.setItem("authTimestamp", Date.now().toString());
-        localStorage.setItem("authToken", `token_${registeredUser.id}_${Date.now()}`);
-        
+        localStorage.setItem("authToken", `token_${response.data.id}_${Date.now()}`);
+
         setUser(loggedInUser);
         return true;
       }
-      
       return false;
     } catch (error) {
       console.error("Login error:", error);
@@ -112,7 +100,7 @@ export const AuthProvider = ({ children }) => {
   };
 
   return (
-    <AuthContext.Provider value={{ user, login, logout, isLoading }}>
+    <AuthContext.Provider value={{ user, login, logout, register, isLoading }}>
       {children}
     </AuthContext.Provider>
   );

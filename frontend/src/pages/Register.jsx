@@ -1,5 +1,6 @@
-import { useState } from "react";
+import { useState, useContext } from "react";
 import { useNavigate, Link } from "react-router-dom";
+import { AuthContext } from "../context/AuthContext";
 
 const Register = () => {
   const [formData, setFormData] = useState({
@@ -9,7 +10,9 @@ const Register = () => {
     confirmPassword: ""
   });
   const [error, setError] = useState("");
+  const [isLoading, setIsLoading] = useState(false);
   const navigate = useNavigate();
+  const { register } = useContext(AuthContext);
 
   const handleChange = (e) => {
     const { name, value } = e.target;
@@ -19,42 +22,42 @@ const Register = () => {
     }));
   };
 
-  const handleSubmit = (e) => {
+  const handleSubmit = async (e) => {
     e.preventDefault();
     setError("");
+    setIsLoading(true);
 
     if (!formData.name || !formData.email || !formData.password || !formData.confirmPassword) {
       setError("All fields are required");
+      setIsLoading(false);
       return;
     }
 
     if (formData.password !== formData.confirmPassword) {
       setError("Passwords do not match");
+      setIsLoading(false);
       return;
     }
 
     if (formData.password.length < 6) {
       setError("Password must be at least 6 characters");
+      setIsLoading(false);
       return;
     }
 
-    // Store user data in localStorage (mock registration)
-    const users = JSON.parse(localStorage.getItem("users") || "[]");
-    if (users.find(u => u.email === formData.email)) {
-      setError("Email already registered");
-      return;
+    try {
+      const result = await register(formData.name, formData.email, formData.password);
+      if (result.success) {
+        alert("Registration successful! Please login.");
+        navigate("/");
+      } else {
+        setError(result.error);
+      }
+    } catch (error) {
+      setError("Registration failed. Please try again.");
+    } finally {
+      setIsLoading(false);
     }
-
-    users.push({
-      id: Date.now(),
-      name: formData.name,
-      email: formData.email,
-      password: formData.password
-    });
-
-    localStorage.setItem("users", JSON.stringify(users));
-    alert("Registration successful! Please login.");
-    navigate("/");
   };
 
   return (
@@ -166,19 +169,19 @@ const Register = () => {
             />
           </div>
 
-          <button type="submit" style={{
+          <button type="submit" disabled={isLoading} style={{
             width: "100%",
             padding: "12px",
-            backgroundColor: "#0066cc",
+            backgroundColor: isLoading ? "#ccc" : "#0066cc",
             color: "white",
             border: "none",
             borderRadius: "4px",
             fontSize: "16px",
             fontWeight: "600",
-            cursor: "pointer",
+            cursor: isLoading ? "not-allowed" : "pointer",
             marginBottom: "15px"
           }}>
-            Register
+            {isLoading ? "Registering..." : "Register"}
           </button>
         </form>
 
