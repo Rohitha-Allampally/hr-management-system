@@ -7,7 +7,7 @@ export default defineConfig({
     host: true,
     port: 10000,
     allowedHosts: [
-      "hr-management-system-3-yvfg.onrender.com"
+      "hr-management-system-6-tj68.onrender.com"
     ]
   }
 })
