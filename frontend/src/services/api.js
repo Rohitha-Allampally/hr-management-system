@@ -1,11 +1,11 @@
 import axios from "axios";
 
-const defaultBaseURL = "http://localhost:8080/api";
+const defaultBaseURL = "http://localhost:8080";
 const apiBaseUrl = import.meta.env.VITE_API_URL || defaultBaseURL;
 
 if (!import.meta.env.VITE_API_URL) {
   console.warn("VITE_API_URL is not set. Using fallback:", apiBaseUrl);
-  console.warn("Set VITE_API_URL in Vercel Environment Variables to your deployed backend API host.");
+  console.warn("Set VITE_API_URL in Vercel Environment Variables to your deployed backend API host (no /api suffix needed). ");
 }
 
 const API = axios.create({
