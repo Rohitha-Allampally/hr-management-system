@@ -53,7 +53,7 @@ const Register = () => {
       } else {
         setError(result.error);
       }
-    } catch (error) {
+    } catch {
       setError("Registration failed. Please try again.");
     } finally {
       setIsLoading(false);
